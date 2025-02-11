@@ -7,9 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Proof extends Model
 {
-    use HasFactory;
-
-    protected $fillable = ['user_id', 'file_path', 'status'];
+    protected $fillable = ['user_id', 'proof_type', 'file_path', 'status'];
 
     public function user()
     {

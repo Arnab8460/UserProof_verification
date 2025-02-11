@@ -6,7 +6,14 @@ use App\Http\Controllers\UserProofController;
 Route::get('/', function () {
     return view('welcome');
 });
+// Route::get('/users', [UserProofController::class, 'index']);
+// Route::post('/approve/{id}', [UserProofController::class, 'approve']);
+// Route::post('/reject/{id}', [UserProofController::class, 'reject']);
+// Route::post('/reupload/{id}', [UserProofController::class, 'reupload']);
+
+
 Route::get('/users', [UserProofController::class, 'index']);
-Route::post('/approve/{id}', [UserProofController::class, 'approve']);
-Route::post('/reject/{id}', [UserProofController::class, 'reject']);
+Route::post('/approve/{id}/{type}', [UserProofController::class, 'approve']);
+Route::post('/reject/{id}/{type}', [UserProofController::class, 'reject']);
 Route::post('/reupload/{id}', [UserProofController::class, 'reupload']);
+

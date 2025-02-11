@@ -10,15 +10,18 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-    {
-        Schema::create('proofs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('user_proofs')->onDelete('cascade');
-            $table->string('file_path')->nullable();
-            $table->enum('status', ['Not Submitted', 'Waiting for Approval', 'Approved', 'Rejected'])->default('Not Submitted');
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('proofs', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('user_id')->constrained('user_proofs')->onDelete('cascade');
+        $table->string('proof_type'); 
+        $table->string('file_path')->nullable();
+        $table->enum('status', ['Not Submitted', 'Waiting for Approval', 'Approved', 'Rejected'])->default('Not Submitted');
+        $table->timestamps();
+    });
+}
+
+
 
     /**
      * Reverse the migrations.
