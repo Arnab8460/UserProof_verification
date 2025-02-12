@@ -13,7 +13,9 @@ Route::get('/', function () {
 
 
 Route::get('/users', [UserProofController::class, 'index']);
+Route::post("get_pagination",[UserProofController::class, 'get_pagination']);
 Route::post('/approve/{id}/{type}', [UserProofController::class, 'approve']);
 Route::post('/reject/{id}/{type}', [UserProofController::class, 'reject']);
 Route::post('/reupload/{id}', [UserProofController::class, 'reupload']);
+Route::post('/filter-users', [UserProofController::class, 'filterUsers']);
 

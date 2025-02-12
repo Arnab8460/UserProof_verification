@@ -8,6 +8,17 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
+<form method="GET" action="{{ url('index') }}">
+    <select name="status" onchange="this.form.submit()">
+        <option value="">All Status</option>
+        <option value="Not Submitted" {{ request('status') == 'Not Submitted' ? 'selected' : '' }}>Not Submitted</option>
+        <option value="Waiting for Approval" {{ request('status') == 'Waiting for Approval' ? 'selected' : '' }}>Waiting for Approval</option>
+        <option value="Approved" {{ request('status') == 'Approved' ? 'selected' : '' }}>Approved</option>
+        <option value="Rejected" {{ request('status') == 'Rejected' ? 'selected' : '' }}>Rejected</option>
+    </select>
+    <input type="text" name="email" placeholder="Search Email" value="{{ request('email') }}">
+    <button type="submit">Search</button>
+</form>
 
 <table border="1">
     <tr>
@@ -23,16 +34,12 @@
         <td>{{ $user->email }}</td>
         <td class="status-{{ $user->id }}">{{ $user->status }}</td>
         <td>{{ $user->created_at }}</td>
-        <!-- <td>
-            <button class="approve-btn" data-id="{{ $user->id }}">Approve</button>
-            <button class="reject-btn" data-id="{{ $user->id }}">Reject</button>
-        </td> -->
         <td>
-    <button class="approve-btn" data-id="{{ $user->id }}" data-type="id">Approve ID</button>
-    <button class="approve-btn" data-id="{{ $user->id }}" data-type="address">Approve Address</button>
-    <button class="reject-btn" data-id="{{ $user->id }}" data-type="id">Reject ID</button>
-    <button class="reject-btn" data-id="{{ $user->id }}" data-type="address">Reject Address</button>
-</td>
+            <button class="approve-btn" data-id="{{ $user->id }}" data-type="id">Approve ID</button>
+            <button class="approve-btn" data-id="{{ $user->id }}" data-type="address">Approve Address</button>
+            <button class="reject-btn" data-id="{{ $user->id }}" data-type="id">Reject ID</button>
+            <button class="reject-btn" data-id="{{ $user->id }}" data-type="address">Reject Address</button>
+        </td>
 
     </tr>
     @endforeach
