@@ -4,99 +4,39 @@ namespace App\Http\Controllers;
 use App\Models\UserProof;
 use App\Models\Proof;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
+
 
 use Illuminate\Http\Request;
 
 class UserProofController extends Controller
 {
-    // public function index(Request $request)
-    // {
-    //     $query = UserProof::query();
-
-    //     if ($request->has('status')) {
-    //         $query->where('status', $request->status);
-    //     }
-
-    //     if ($request->has('email')) {
-    //         $query->where('email', 'like', '%' . $request->email . '%');
-    //     }
-
-    //     $users = $query->orderByRaw("
-    //         CASE 
-    //             WHEN status = 'Waiting for Approval' THEN 1
-    //             WHEN status = 'Not Submitted' THEN 2
-    //             WHEN status = 'Rejected' THEN 3
-    //             ELSE 4
-    //         END
-    //     ")->paginate(10);
-
-    //     return view('index', compact('users'));
-    // }
-    // public function approve($id)
-    // {
-    //     $user = UserProof::find($id);
-    //     if (!$user) return response()->json(['error' => 'User not found'], 404);
-
-    //     $user->status = 'Approved';
-    //     $user->save();
-
-    //     return response()->json(['success' => 'User approved successfully']);
-    // }
-
-    // public function reject($id)
-    // {
-    //     $user = UserProof::find($id);
-    //     if (!$user) return response()->json(['error' => 'User not found'], 404);
-
-    //     $user->status = 'Rejected';
-    //     $user->save();
-
-    //     return response()->json(['success' => 'User rejected successfully']);
-    // }
-    // public function reupload(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'proof' => 'required|file|mimes:jpg,png,pdf|max:2048'
-    //     ]);
-
-    //     $user = UserProof::find($id);
-    //     if (!$user) return redirect()->back()->with('error', 'User not found');
-
-    //     $file = $request->file('proof');
-    //     $filename = time() . '_' . $file->getClientOriginalName();
-    //     $file->move(public_path('uploads'), $filename);
-
-    //     if ($request->proof_type === 'id') {
-    //         $user->id_proof = $filename;
-    //     } else {
-    //         $user->address_proof = $filename;
-    //     }
-
-    //     $user->status = 'Waiting for Approval';
-    //     $user->save();
-
-    //     return redirect()->back()->with('success', 'Proof reuploaded successfully');
-    // }
-
+    
     public function index(Request $request)
     {
         $query = UserProof::query();
-        $query->orderByRaw("FIELD(status, 'Waiting for Approval', 'Not Submitted', 'Rejected', 'Approved')");
 
-    
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-    
-        if ($request->has('email')) {
-            $query->where('email', 'like', '%' . $request->email . '%');
-        }
-    
-        $users = $query->paginate(10);
-    
+        $query->orderByRaw("FIELD(status, 'Waiting for Approval', 'Not Submitted', 'Rejected', 'Approved')");
+        $users = $query->paginate(5);
         return view('index', compact('users'));
     }
-    
+
+    public function filterUsers(Request $request)
+    {
+        $query = UserProof::query();
+
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('email') && $request->email != '') {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        $users = $query->get(); 
+
+        return response()->json(['users' => $users]);
+    }
     
     public function approve($id, $type)
     {
@@ -109,7 +49,7 @@ class UserProofController extends Controller
             $user->address_proof_status = 'Approved';
         }
 
-        // If both proofs are approved, update overall status
+        // যদি দুটো প্রমাণই Approved হয়, তাহলে পুরো User Approved হবে
         if ($user->id_proof_status === 'Approved' && $user->address_proof_status === 'Approved') {
             $user->status = 'Approved';
         } else {
@@ -121,21 +61,30 @@ class UserProofController extends Controller
         return response()->json(['success' => 'Proof approved successfully']);
     }
 
+
     public function reject($id, $type)
     {
         $user = UserProof::find($id);
         if (!$user) return response()->json(['error' => 'User not found'], 404);
 
+        $message = '';
+
         if ($type === 'id') {
             $user->id_proof_status = 'Rejected';
+            $message = 'ID Proof rejected successfully';
         } elseif ($type === 'address') {
             $user->address_proof_status = 'Rejected';
+            $message = 'Address Proof rejected successfully';
+        }
+        if ($user->id_proof_status === 'Rejected' && $user->address_proof_status === 'Rejected') {
+            $user->status = 'Rejected';
+        } else {
+            $user->status = 'Waiting for Approval';
         }
 
-        $user->status = 'Rejected';
         $user->save();
 
-        return response()->json(['success' => 'Proof rejected successfully']);
+        return response()->json(['success' => $message]);
     }
 
     public function reupload(Request $request, $id)
@@ -146,32 +95,41 @@ class UserProofController extends Controller
         ]);
 
         $user = UserProof::find($id);
-        if (!$user) return redirect()->back()->with('error', 'User not found');
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
 
         if ($request->proof_type === 'id' && $user->id_proof_status !== 'Rejected') {
-            return redirect()->back()->with('error', 'Only rejected proofs can be reuploaded.');
+            return response()->json(['error' => 'Only rejected ID proofs can be reuploaded.'], 400);
         }
         if ($request->proof_type === 'address' && $user->address_proof_status !== 'Rejected') {
-            return redirect()->back()->with('error', 'Only rejected proofs can be reuploaded.');
+            return response()->json(['error' => 'Only rejected Address proofs can be reuploaded.'], 400);
         }
 
         $file = $request->file('proof');
-        $filename = time() . '_' . $file->getClientOriginalName();
-        $file->move(public_path('uploads'), $filename);
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $filePath = $file->storeAs('proofs', $filename, 'public');
 
         if ($request->proof_type === 'id') {
-            $user->id_proof = $filename;
+            $user->id_proof = $filePath;
             $user->id_proof_status = 'Waiting for Approval';
         } else {
-            $user->address_proof = $filename;
+            $user->address_proof = $filePath;
             $user->address_proof_status = 'Waiting for Approval';
         }
 
         $user->status = 'Waiting for Approval';
         $user->save();
 
-        return redirect()->back()->with('success', 'Proof reuploaded successfully');
+        return response()->json(['success' => 'Proof reuploaded successfully']);
     }
+
+
+
+
+
+
+    
 
 
 
