@@ -11,17 +11,28 @@ use Illuminate\Http\Request;
 
 class UserProofController extends Controller
 {
-    
-    public function index(Request $request)
+    public function index()
     {
-        $query = UserProof::query();
+        $users = UserProof::orderByRaw("FIELD(status, 'Waiting for Approval', 'Not Submitted', 'Rejected', 'Approved')")
+            ->limit(5)
+            ->get();
 
-        $query->orderByRaw("FIELD(status, 'Waiting for Approval', 'Not Submitted', 'Rejected', 'Approved')");
-        $users = $query->paginate(5);
         return view('index', compact('users'));
     }
 
-    public function filterUsers(Request $request)
+    public function loadMoreUsers(Request $request) //loadmore button api call function
+    {
+        $offset = $request->input('offset', 0);
+        
+        $users = UserProof::orderByRaw("FIELD(status, 'Waiting for Approval', 'Not Submitted', 'Rejected', 'Approved')")
+            ->offset($offset)
+            ->limit(5)
+            ->get();
+
+        return response()->json(['users' => $users]);
+    }
+
+    public function filterUsers(Request $request) //filter status and email 
     {
         $query = UserProof::query();
 
@@ -48,8 +59,6 @@ class UserProofController extends Controller
         } elseif ($type === 'address') {
             $user->address_proof_status = 'Approved';
         }
-
-        // যদি দুটো প্রমাণই Approved হয়, তাহলে পুরো User Approved হবে
         if ($user->id_proof_status === 'Approved' && $user->address_proof_status === 'Approved') {
             $user->status = 'Approved';
         } else {
