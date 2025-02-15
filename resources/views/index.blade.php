@@ -258,7 +258,7 @@
                 let userId = $(this).data('id');
                 let type = $(this).data('type');
                 let action = $(this).hasClass('approve') ? 'approve' : 'reject';
-
+                // Function to update proof status via AJAX
                 $.ajax({
                     url: `/${action}/${userId}/${type}`,
                     type: "POST",
@@ -267,14 +267,14 @@
                         alert(response.success);
                         location.reload();
                         let statusText = action === 'approve' ? 'Approved' : 'Rejected';
-                        $(`.status-${userId}-${type}`).text(statusText);
+                        $(`.status-${userId}-${type}`).text(statusText); // Update status text in the table
                     },
                     error: function (xhr) {
                         alert("Error: " + xhr.responseText);
                     }
                 });
             });
-
+            //function to filter status and email
             function fetchFilteredUsers() {
                 let status = $('#status').val();
                 let email = $('#email').val();
@@ -338,12 +338,12 @@
             $('#status').change(fetchFilteredUsers);
             $('#searchBtn').click(fetchFilteredUsers);
         });
-
+ // Function to handle proof reupload via AJAX
         function uploadProof(userId, proofType) {
             let formData = new FormData(document.getElementById(`uploadForm-${userId}-${proofType}`));
 
             $.ajax({
-                url: `/reupload/${userId}`,
+                url: `/reupload/${userId}`, // Laravel route to handle reupload
                 type: "POST",
                 data: formData,
                 processData: false,

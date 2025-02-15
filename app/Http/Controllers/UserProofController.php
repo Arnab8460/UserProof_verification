@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 class UserProofController extends Controller
 {
-    public function index()
+    public function index() // Display the list of user proofs
     {
         $users = UserProof::orderByRaw("FIELD(status, 'Waiting for Approval', 'Not Submitted', 'Rejected', 'Approved')")
             ->limit(5)
@@ -49,7 +49,7 @@ class UserProofController extends Controller
         return response()->json(['users' => $users]);
     }
     
-    public function approve($id, $type)
+    public function approve($id, $type) // Approve a user proof
     {
         $user = UserProof::find($id);
         if (!$user) return response()->json(['error' => 'User not found'], 404);
@@ -71,7 +71,7 @@ class UserProofController extends Controller
     }
 
 
-    public function reject($id, $type)
+    public function reject($id, $type)  // Reject a user proof
     {
         $user = UserProof::find($id);
         if (!$user) return response()->json(['error' => 'User not found'], 404);
@@ -96,14 +96,14 @@ class UserProofController extends Controller
         return response()->json(['success' => $message]);
     }
 
-    public function reupload(Request $request, $id)
+    public function reupload(Request $request, $id) // Handle proof reupload
     {
         $request->validate([
             'proof' => 'required|file|mimes:jpg,png,pdf|max:2048',
             'proof_type' => 'required|in:id,address'
         ]);
 
-        $user = UserProof::find($id);
+        $user = UserProof::find($id);  // Delete the old proof file
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
         }
@@ -115,7 +115,7 @@ class UserProofController extends Controller
             return response()->json(['error' => 'Only rejected Address proofs can be reuploaded.'], 400);
         }
 
-        $file = $request->file('proof');
+        $file = $request->file('proof'); // Store the new file
         $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
         $filePath = $file->storeAs('proofs', $filename, 'public');
 
